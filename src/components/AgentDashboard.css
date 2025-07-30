@@ -1,0 +1,44 @@
+.agent-dashboard {
+  height: calc(100vh - 56px); /* Adjust for navbar height */
+}
+
+.chat-list {
+  height: 100%;
+  overflow-y: auto;
+}
+
+.chat-area {
+  height: 100%;
+}
+
+.chat-body {
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+  background-color: #f8f9fa;
+}
+
+.chat-message {
+  margin-bottom: 10px;
+}
+
+.status-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-left: 5px;
+}
+
+.status-dot.online {
+  background-color: #28a745;
+}
+
+.status-dot.offline {
+  background-color: #dc3545;
+}
+
+@media (max-width: 767.98px) {
+  .chat-list {
+    height: calc(100vh - 56px);
+  }
+}

@@ -1,0 +1,37 @@
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  scroll-behavior: smooth;
+}
+
+.parallax-bg {
+  background: url("https://via.placeholder.com/1500x500") no-repeat center
+    center;
+  background-attachment: fixed;
+  background-size: cover;
+  padding: 50px 0;
+}
+
+.testimonial-card {
+  margin: 0 auto;
+  max-width: 600px;
+  background: linear-gradient(135deg, #ffffff 0%, #f1f3f5 100%);
+  border-radius: 10px;
+  transition: transform 0.3s ease;
+}
+
+.testimonial-card:hover {
+  transform: translateY(-5px);
+}
+
+.text-teal {
+  color: #20c997;
+}
+
+.carousel-control-prev-icon.bg-teal,
+.carousel-control-next-icon.bg-teal {
+  background-color: #20c997;
+  border-radius: 50%;
+}
