@@ -65,19 +65,17 @@ const setupAgentEmails = async (db) => {
 };
 
 // ChatIcon component for floating chat button
-function ChatIcon({ theme }) {
+function ChatIcon() {
   const location = useLocation();
 
   return location.pathname !== "/chat" && location.pathname !== "/dashboard" ? (
     <Link
       to="/chat"
-      className={`btn btn-primary d-flex align-items-center ${
-        theme === "light" ? "bg-teal" : "bg-dark text-white"
-      } position-fixed bottom-0 end-0 m-3 shadow`}
+      className="btn btn-primary bg-dark text-white d-flex align-items-center position-fixed bottom-0 end-0 m-3 shadow"
       style={{
         zIndex: 1000,
         transition: "transform 0.2s",
-        bottom: "80px", // Move further upward on mobile to avoid footer overlap
+        bottom: "80px", // Position above footer on mobile
       }}
       onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.1)")}
       onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
@@ -89,69 +87,42 @@ function ChatIcon({ theme }) {
 }
 
 // Footer component for mobile navigation
-function Footer({ user, isAgent, theme }) {
+function Footer({ user, isAgent }) {
   return (
     <footer
-      className={`d-md-none fixed-bottom ${
-        theme === "light" ? "bg-teal" : "bg-dark"
-      } py-2`}
+      className="d-md-none fixed-bottom bg-dark py-2"
       style={{ zIndex: 1000 }}
     >
       <div className="container">
         <ul className="nav justify-content-center">
           <li className="nav-item">
-            <Link
-              className={`nav-link ${
-                theme === "light" ? "text-dark" : "text-white"
-              }`}
-              to="/"
-            >
+            <Link className="nav-link text-white" to="/">
               <i className="bi bi-house me-1"></i>
               Home
             </Link>
           </li>
           <li className="nav-item">
-            <Link
-              className={`nav-link ${
-                theme === "light" ? "text-dark" : "text-white"
-              }`}
-              to="/about"
-            >
+            <Link className="nav-link text-white" to="/about">
               <i className="bi bi-info-circle me-1"></i>
               About
             </Link>
           </li>
           <li className="nav-item">
-            <Link
-              className={`nav-link ${
-                theme === "light" ? "text-dark" : "text-white"
-              }`}
-              to="/chat"
-            >
+            <Link className="nav-link text-white" to="/chat">
               <i className="bi bi-chat-fill me-1"></i>
               Chat
             </Link>
           </li>
           {user && isAgent && (
             <li className="nav-item">
-              <Link
-                className={`nav-link ${
-                  theme === "light" ? "text-dark" : "text-white"
-                }`}
-                to="/dashboard"
-              >
+              <Link className="nav-link text-white" to="/dashboard">
                 <i className="bi bi-speedometer2 me-1"></i>
                 Dashboard
               </Link>
             </li>
           )}
           <li className="nav-item">
-            <a
-              className={`nav-link ${
-                theme === "light" ? "text-dark" : "text-white"
-              }`}
-              href="/terms"
-            >
+            <a className="nav-link text-white" href="/terms">
               <i className="bi bi-file-text me-1"></i>
               Terms
             </a>
@@ -166,7 +137,6 @@ function App() {
   const [user, setUser] = useState(null);
   const [isAgent, setIsAgent] = useState(false);
   const [error, setError] = useState(null);
-  const [theme, setTheme] = useState("light");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
@@ -292,10 +262,6 @@ function App() {
     }
   };
 
-  const toggleTheme = () => {
-    setTheme(theme === "light" ? "dark" : "light");
-  };
-
   if (!isAuthReady) {
     return (
       <div className="container mt-5 pt-5 text-center">
@@ -308,17 +274,11 @@ function App() {
 
   return (
     <Router>
-      <div className={theme === "light" ? "bg-light" : "bg-dark text-white"}>
-        <nav
-          className={`navbar navbar-expand-lg fixed-top ${
-            theme === "light" ? "bg-teal" : "bg-dark"
-          }`}
-        >
+      <div className="bg-dark text-white">
+        <nav className="navbar navbar-expand-lg fixed-top bg-dark">
           <div className="container">
             <Link
-              className={`navbar-brand ${
-                theme === "light" ? "text-dark" : "text-white"
-              } d-flex align-items-center`}
+              className="navbar-brand text-white d-flex align-items-center"
               to="/"
             >
               <img
@@ -339,24 +299,10 @@ function App() {
             </button>
             <div className="collapse navbar-collapse" id="navbarNav">
               <ul className="navbar-nav ms-auto">
-                <li className="nav-item">
-                  <button
-                    className={`btn btn-outline-${
-                      theme === "light" ? "dark" : "light"
-                    } mx-2`}
-                    onClick={toggleTheme}
-                  >
-                    {theme === "light" ? "Dark Mode" : "Light Mode"}
-                  </button>
-                </li>
                 {user ? (
                   <>
                     <li className="nav-item">
-                      <span
-                        className={`navbar-text mx-2 ${
-                          theme === "light" ? "text-dark" : "text-white"
-                        }`}
-                      >
+                      <span className="navbar-text mx-2 text-white">
                         Welcome, {user.displayName}
                       </span>
                     </li>
@@ -373,7 +319,7 @@ function App() {
                   <>
                     <li className="nav-item">
                       <button
-                        className="btn btn-outline-dark mx-2"
+                        className="btn btn-outline-light mx-2"
                         onClick={() => {
                           setIsRegistering(false);
                           setShowAuthModal(true);
@@ -407,7 +353,7 @@ function App() {
             style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
           >
             <div className="modal-dialog modal-dialog-centered">
-              <div className="modal-content">
+              <div className="modal-content bg-dark text-white">
                 <div className="modal-header bg-primary text-white">
                   <h5 className="modal-title">
                     {isRegistering ? "Register" : "Login"}
@@ -427,7 +373,7 @@ function App() {
                         </label>
                         <input
                           type="text"
-                          className="form-control"
+                          className="form-control bg-dark text-white"
                           id="displayName"
                           value={displayName}
                           onChange={(e) => setDisplayName(e.target.value)}
@@ -442,7 +388,7 @@ function App() {
                       </label>
                       <input
                         type="email"
-                        className="form-control"
+                        className="form-control bg-dark text-white"
                         id="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
@@ -456,7 +402,7 @@ function App() {
                       </label>
                       <input
                         type="password"
-                        className="form-control"
+                        className="form-control bg-dark text-white"
                         id="password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
@@ -474,7 +420,7 @@ function App() {
                   {!isRegistering && (
                     <div className="mt-3 text-center">
                       <button
-                        className="btn btn-link"
+                        className="btn btn-link text-white"
                         onClick={() => setShowResetModal(true)}
                       >
                         Forgot Password?
@@ -484,7 +430,7 @@ function App() {
                 </div>
                 <div className="modal-footer">
                   <button
-                    className="btn btn-link"
+                    className="btn btn-link text-white"
                     onClick={() => setIsRegistering(!isRegistering)}
                   >
                     {isRegistering ? "Switch to Login" : "Switch to Register"}
@@ -502,16 +448,12 @@ function App() {
             style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
           >
             <div className="modal-dialog modal-dialog-centered">
-              <div
-                className={`modal-content ${
-                  theme === "dark" ? "bg-dark text-white" : ""
-                }`}
-              >
+              <div className="modal-content bg-dark text-white">
                 <div
                   className="modal-header"
                   style={{
-                    backgroundColor: theme === "dark" ? "#343a40" : "#20c997",
-                    color: theme === "dark" ? "#fff" : "#000",
+                    backgroundColor: "#343a40",
+                    color: "#fff",
                   }}
                 >
                   <h5 className="modal-title">Reset Password</h5>
@@ -534,7 +476,7 @@ function App() {
                       </label>
                       <input
                         type="email"
-                        className="form-control"
+                        className="form-control bg-dark text-white"
                         id="resetEmail"
                         value={resetEmail}
                         onChange={(e) => setResetEmail(e.target.value)}
@@ -562,7 +504,7 @@ function App() {
           </div>
         )}
 
-        <ChatIcon theme={theme} />
+        <ChatIcon />
 
         <Routes>
           <Route
@@ -589,12 +531,18 @@ function App() {
                     </div>
                     <div className="col-md-6">
                       <ul className="list-group">
-                        <li className="list-group-item">Founded in 2020</li>
-                        <li className="list-group-item">
+                        <li className="list-group-item bg-dark text-white">
+                          Founded in 2020
+                        </li>
+                        <li className="list-group-item bg-dark text-white">
                           Over 10,000 users assisted
                         </li>
-                        <li className="list-group-item">24/7 support team</li>
-                        <li className="list-group-item">Nationwide coverage</li>
+                        <li className="list-group-item bg-dark text-white">
+                          24/7 support team
+                        </li>
+                        <li className="list-group-item bg-dark text-white">
+                          Nationwide coverage
+                        </li>
                       </ul>
                     </div>
                   </div>
@@ -603,7 +551,7 @@ function App() {
                   <h2 className="h3 mb-4 text-center">What We Do</h2>
                   <div className="row g-4">
                     <div className="col-md-4">
-                      <div className="card h-100 shadow-sm">
+                      <div className="card h-100 shadow-sm bg-dark text-white">
                         <div className="card-body text-center">
                           <i className="bi bi-book-fill display-4 text-primary mb-3"></i>
                           <h5 className="card-title">Education</h5>
@@ -615,7 +563,7 @@ function App() {
                       </div>
                     </div>
                     <div className="col-md-4">
-                      <div className="card h-100 shadow-sm">
+                      <div className="card h-100 shadow-sm bg-dark text-white">
                         <div className="card-body text-center">
                           <i className="bi bi-shield-fill-check display-4 text-primary mb-3"></i>
                           <h5 className="card-title">Recovery Assistance</h5>
@@ -627,7 +575,7 @@ function App() {
                       </div>
                     </div>
                     <div className="col-md-4">
-                      <div className="card h-100 shadow-sm">
+                      <div className="card h-100 shadow-sm bg-dark text-white">
                         <div className="card-body text-center">
                           <i className="bi bi-chat-fill display-4 text-primary mb-3"></i>
                           <h5 className="card-title">Support</h5>
@@ -717,7 +665,7 @@ function App() {
                           }`}
                         >
                           <div className="card text-center border-0 shadow-sm mx-auto testimonial-card">
-                            <div className="card-body bg-teal text-white">
+                            <div className="card-body bg-dark text-white">
                               <h5 className="card-title">{testimonial.name}</h5>
                               <p className="card-text">{testimonial.text}</p>
                             </div>
@@ -732,7 +680,7 @@ function App() {
                       data-bs-slide="prev"
                     >
                       <span
-                        className="carousel-control-prev-icon bg-teal"
+                        className="carousel-control-prev-icon bg-dark"
                         aria-hidden="true"
                       ></span>
                       <span className="visually-hidden">Previous</span>
@@ -744,7 +692,7 @@ function App() {
                       data-bs-slide="next"
                     >
                       <span
-                        className="carousel-control-next-icon bg-teal"
+                        className="carousel-control-next-icon bg-dark"
                         aria-hidden="true"
                       ></span>
                       <span className="visually-hidden">Next</span>
@@ -779,13 +727,13 @@ function App() {
                   <div className="col-12">
                     <h3>Our Achievements</h3>
                     <ul className="list-group">
-                      <li className="list-group-item">
+                      <li className="list-group-item bg-dark text-white">
                         Helped over 10,000 victims recover funds
                       </li>
-                      <li className="list-group-item">
+                      <li className="list-group-item bg-dark text-white">
                         Conducted 500+ workshops nationwide
                       </li>
-                      <li className="list-group-item">
+                      <li className="list-group-item bg-dark text-white">
                         24/7 support with 98% satisfaction rate
                       </li>
                     </ul>
@@ -830,7 +778,7 @@ function App() {
           />
         </Routes>
 
-        <Footer user={user} isAgent={isAgent} theme={theme} />
+        <Footer user={user} isAgent={isAgent} />
       </div>
     </Router>
   );
