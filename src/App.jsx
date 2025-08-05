@@ -1,12 +1,20 @@
 import { useState, useEffect } from "react";
-import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Link,
+  useLocation,
+} from "react-router-dom";
 import { initializeApp } from "firebase/app";
 import {
   getAuth,
-  signInWithPopup,
-  GoogleAuthProvider,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
+  updateProfile,
+  sendPasswordResetEmail,
 } from "firebase/auth";
 import {
   getFirestore,
@@ -43,113 +51,277 @@ const emailjsConfig = {
   userId: "23cC6xqy4YwEV7PV3",
 };
 
+// Function to set up agent emails
+const setupAgentEmails = async (db) => {
+  try {
+    const agentDocRef = doc(db, "agents", "emails");
+    await setDoc(agentDocRef, {
+      emails: [
+        "anurudeen511@gmail.com", // Replace with your first Gmail address
+        "sandy4556789@gmail.com", // Replace with your second Gmail address
+        // Add more Gmail addresses as needed
+      ],
+    });
+    console.log("Agent emails set up successfully.");
+  } catch (error) {
+    console.error("Error setting up agent emails:", error);
+  }
+};
+
+// New ChatIcon component to handle useLocation
+function ChatIcon({ theme }) {
+  const location = useLocation();
+
+  return location.pathname !== "/chat" && location.pathname !== "/dashboard" ? (
+    <Link
+      to="/chat"
+      className={`btn btn-primary d-flex align-items-center ${
+        theme === "light" ? "bg-teal" : "bg-dark text-white"
+      } position-fixed bottom-0 end-0 m-3 shadow`}
+      style={{
+        zIndex: 1000,
+        transition: "transform 0.2s",
+      }}
+      onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.1)")}
+      onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
+    >
+      <i className="bi bi-chat-fill me-2"></i>
+      Chat with us
+    </Link>
+  ) : null;
+}
+
 function App() {
   const [user, setUser] = useState(null);
   const [isAgent, setIsAgent] = useState(false);
   const [error, setError] = useState(null);
   const [theme, setTheme] = useState("light");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [displayName, setDisplayName] = useState("");
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [isAuthReady, setIsAuthReady] = useState(false);
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetMessage, setResetMessage] = useState(null);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      if (currentUser) {
-        setUser(currentUser);
-        try {
-          const userDocRef = doc(db, "users", currentUser.uid);
-          const userDoc = await getDoc(userDocRef);
-          if (!userDoc.exists()) {
-            await setDoc(userDocRef, {
-              role: "user", // Default to user, admin must update to 'agent'
-              email: currentUser.email,
-              displayName: currentUser.displayName,
-              lastActive: new Date().toISOString(),
-            });
-            setIsAgent(false);
-          } else {
-            await updateDoc(userDocRef, {
-              lastActive: new Date().toISOString(),
-            });
-            setIsAgent(userDoc.data().role === "agent");
+    // Run this only once to set up agent emails
+    setupAgentEmails(db);
+
+    const unsubscribe = onAuthStateChanged(
+      auth,
+      async (currentUser) => {
+        setIsAuthReady(true);
+        if (currentUser) {
+          setUser(currentUser);
+          try {
+            const userDocRef = doc(db, "users", currentUser.uid);
+            const userDoc = await getDoc(userDocRef);
+            if (!userDoc.exists()) {
+              await setDoc(userDocRef, {
+                role: "user",
+                email: currentUser.email,
+                displayName:
+                  currentUser.displayName || currentUser.email.split("@")[0],
+                lastActive: new Date().toISOString(),
+              });
+              setIsAgent(false);
+            } else {
+              await updateDoc(userDocRef, {
+                lastActive: new Date().toISOString(),
+              });
+              setIsAgent(userDoc.data().role === "agent");
+            }
+          } catch (err) {
+            console.error("Error checking user role:", err);
+            setError("Failed to load user role. Please try again.");
           }
-        } catch (err) {
-          console.error("Error checking user role:", err);
+        } else {
+          setUser(null);
+          setIsAgent(false);
         }
-      } else {
-        setUser(null);
-        setIsAgent(false);
+      },
+      (err) => {
+        console.error("Auth state error:", err);
+        setError("Authentication error. Please refresh the page.");
+        setIsAuthReady(true);
       }
-    });
+    );
     return () => unsubscribe();
   }, [db]);
 
-  const handleGoogleLogin = async () => {
-    const provider = new GoogleAuthProvider();
-    provider.addScope("https://www.googleapis.com/auth/gmail.send");
+  const handleRegister = async (e) => {
+    e.preventDefault();
     try {
-      await signInWithPopup(auth, provider);
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      await updateProfile(userCredential.user, { displayName });
+      setError(null);
+      setEmail("");
+      setPassword("");
+      setDisplayName("");
+      setShowAuthModal(false);
     } catch (error) {
-      console.warn("Login error (ignoring COOP warning):", error.message);
-      setError("Login failed. Please try again.");
+      console.error("Registration error:", error);
+      setError(
+        error.message.includes("email-already-in-use")
+          ? "Email already in use. Try logging in."
+          : "Registration failed. Please try again."
+      );
     }
   };
 
-  const handleLogout = () => {
-    signOut(auth).catch((error) => {
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      setError(null);
+      setEmail("");
+      setPassword("");
+      setShowAuthModal(false);
+    } catch (error) {
+      console.error("Login error:", error);
+      setError("Login failed. Check your email or password.");
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      setError(null);
+    } catch (error) {
       console.error("Logout error:", error);
       setError("Logout failed. Please try again.");
-    });
+    }
+  };
+
+  const handlePasswordReset = async (e) => {
+    e.preventDefault();
+    setResetMessage(null);
+    setError(null);
+    try {
+      await sendPasswordResetEmail(auth, resetEmail);
+      setResetMessage("Password reset email sent. Check your inbox.");
+      setResetEmail("");
+      setTimeout(() => setShowResetModal(false), 3000);
+    } catch (error) {
+      console.error("Password reset error:", error);
+      setError(
+        error.code === "auth/user-not-found"
+          ? "No user found with this email."
+          : error.code === "auth/invalid-email"
+          ? "Invalid email address."
+          : "Failed to send password reset email."
+      );
+    }
   };
 
   const toggleTheme = () => {
     setTheme(theme === "light" ? "dark" : "light");
   };
 
+  if (!isAuthReady) {
+    return (
+      <div className="container mt-5 pt-5 text-center">
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <Router>
       <div className={theme === "light" ? "bg-light" : "bg-dark text-white"}>
         <nav
           className={`navbar navbar-expand-lg fixed-top ${
-            theme === "light" ? "bg-light" : "bg-dark"
+            theme === "light" ? "bg-teal" : "bg-dark"
           }`}
         >
           <div className="container">
-            <Link className="navbar-brand" to="/">
-              Scam Awareness USA
+            <Link
+              className={`navbar-brand ${
+                theme === "light" ? "text-dark" : "text-white"
+              } d-flex align-items-center`}
+              to="/"
+            >
+              <img
+                src="logo.png"
+                alt="Scam Awareness USA Logo"
+                className="me-2 img-fluid"
+                style={{ width: "40px", height: "40px" }}
+              />
+              Scam Awareness
             </Link>
             <button
               className="navbar-toggler"
               type="button"
               data-bs-toggle="collapse"
               data-bs-target="#navbarNav"
-              aria-controls="navbarNav"
-              aria-expanded="false"
-              aria-label="Toggle navigation"
             >
               <span className="navbar-toggler-icon"></span>
             </button>
             <div className="collapse navbar-collapse" id="navbarNav">
               <ul className="navbar-nav ms-auto">
                 <li className="nav-item">
-                  <Link className="nav-link" to="/">
+                  <Link
+                    className={`nav-link ${
+                      theme === "light" ? "text-dark" : "text-white"
+                    }`}
+                    to="/"
+                  >
                     Home
                   </Link>
                 </li>
                 <li className="nav-item">
-                  <Link className="nav-link" to="/about">
+                  <Link
+                    className={`nav-link ${
+                      theme === "light" ? "text-dark" : "text-white"
+                    }`}
+                    to="/about"
+                  >
                     About Us
                   </Link>
                 </li>
                 <li className="nav-item">
-                  <Link className="nav-link" to="/chat">
-                    <i className="bi bi-chat-fill me-1"></i> Chat
+                  <Link
+                    className={`nav-link ${
+                      theme === "light" ? "text-dark" : "text-white"
+                    }`}
+                    to="/chat"
+                  >
+                    <i className="bi bi-chat-fill me-1"></i>Chat
                   </Link>
                 </li>
                 {user && isAgent && (
                   <li className="nav-item">
-                    <Link className="nav-link" to="/dashboard">
+                    <Link
+                      className={`nav-link ${
+                        theme === "light" ? "text-dark" : "text-white"
+                      }`}
+                      to="/dashboard"
+                    >
                       Dashboard
                     </Link>
                   </li>
                 )}
+                <li className="nav-item">
+                  <a
+                    className={`nav-link ${
+                      theme === "light" ? "text-dark" : "text-white"
+                    }`}
+                    href="/terms"
+                  >
+                    Terms
+                  </a>
+                </li>
+              </ul>
+              <ul className="navbar-nav">
                 <li className="nav-item">
                   <button
                     className={`btn btn-outline-${
@@ -163,7 +335,11 @@ function App() {
                 {user ? (
                   <>
                     <li className="nav-item">
-                      <span className="navbar-text mx-2">
+                      <span
+                        className={`navbar-text mx-2 ${
+                          theme === "light" ? "text-dark" : "text-white"
+                        }`}
+                      >
                         Welcome, {user.displayName}
                       </span>
                     </li>
@@ -177,29 +353,207 @@ function App() {
                     </li>
                   </>
                 ) : (
-                  <li className="nav-item">
-                    <button
-                      className="btn btn-primary"
-                      onClick={handleGoogleLogin}
-                    >
-                      Login with Gmail
-                    </button>
-                  </li>
+                  <>
+                    <li className="nav-item">
+                      <button
+                        className="btn btn-outline-dark mx-2"
+                        onClick={() => {
+                          setIsRegistering(false);
+                          setShowAuthModal(true);
+                        }}
+                      >
+                        Login
+                      </button>
+                    </li>
+                    <li className="nav-item">
+                      <button
+                        className="btn btn-primary mx-2"
+                        onClick={() => {
+                          setIsRegistering(true);
+                          setShowAuthModal(true);
+                        }}
+                      >
+                        Register
+                      </button>
+                    </li>
+                  </>
                 )}
               </ul>
             </div>
           </div>
         </nav>
-        {error && (
-          <div className="container mt-5">
+
+        {showAuthModal && !user && (
+          <div
+            className="modal fade show d-block"
+            tabIndex="-1"
+            style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+          >
+            <div className="modal-dialog modal-dialog-centered">
+              <div className="modal-content">
+                <div className="modal-header bg-primary text-white">
+                  <h5 className="modal-title">
+                    {isRegistering ? "Register" : "Login"}
+                  </h5>
+                  <button
+                    type="button"
+                    className="btn-close"
+                    onClick={() => setShowAuthModal(false)}
+                  ></button>
+                </div>
+                <div className="modal-body">
+                  <form onSubmit={isRegistering ? handleRegister : handleLogin}>
+                    {isRegistering && (
+                      <div className="mb-3">
+                        <label htmlFor="displayName" className="form-label">
+                          Name
+                        </label>
+                        <input
+                          type="text"
+                          className="form-control"
+                          id="displayName"
+                          value={displayName}
+                          onChange={(e) => setDisplayName(e.target.value)}
+                          placeholder="Enter your name"
+                          required
+                        />
+                      </div>
+                    )}
+                    <div className="mb-3">
+                      <label htmlFor="email" className="form-label">
+                        Email
+                      </label>
+                      <input
+                        type="email"
+                        className="form-control"
+                        id="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="Enter your email"
+                        required
+                      />
+                    </div>
+                    <div className="mb-3">
+                      <label htmlFor="password" className="form-label">
+                        Password
+                      </label>
+                      <input
+                        type="password"
+                        className="form-control"
+                        id="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="Enter your password"
+                        required
+                      />
+                    </div>
+                    <button type="submit" className="btn btn-primary w-100">
+                      {isRegistering ? "Register" : "Login"}
+                    </button>
+                  </form>
+                  {error && (
+                    <div className="alert alert-danger mt-3">{error}</div>
+                  )}
+                  {!isRegistering && (
+                    <div className="mt-3 text-center">
+                      <button
+                        className="btn btn-link"
+                        onClick={() => setShowResetModal(true)}
+                      >
+                        Forgot Password?
+                      </button>
+                    </div>
+                  )}
+                </div>
+                <div className="modal-footer">
+                  <button
+                    className="btn btn-link"
+                    onClick={() => setIsRegistering(!isRegistering)}
+                  >
+                    {isRegistering ? "Switch to Login" : "Switch to Register"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Password Reset Modal */}
+        {showResetModal && (
+          <div
+            className="modal fade show d-block"
+            tabIndex="-1"
+            style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+          >
+            <div className="modal-dialog modal-dialog-centered">
+              <div
+                className={`modal-content ${
+                  theme === "dark" ? "bg-dark text-white" : ""
+                }`}
+              >
+                <div
+                  className="modal-header"
+                  style={{
+                    backgroundColor: theme === "dark" ? "#343a40" : "#20c997",
+                    color: theme === "dark" ? "#fff" : "#000",
+                  }}
+                >
+                  <h5 className="modal-title">Reset Password</h5>
+                  <button
+                    type="button"
+                    className="btn-close"
+                    onClick={() => {
+                      setShowResetModal(false);
+                      setResetEmail("");
+                      setResetMessage(null);
+                      setError(null);
+                    }}
+                  ></button>
+                </div>
+                <div className="modal-body">
+                  <form onSubmit={handlePasswordReset}>
+                    <div className="mb-3">
+                      <label htmlFor="resetEmail" className="form-label">
+                        Enter your email address
+                      </label>
+                      <input
+                        type="email"
+                        className="form-control"
+                        id="resetEmail"
+                        value={resetEmail}
+                        onChange={(e) => setResetEmail(e.target.value)}
+                        placeholder="Enter your email"
+                        required
+                      />
+                    </div>
+                    {resetMessage && (
+                      <div className="alert alert-success">{resetMessage}</div>
+                    )}
+                    {error && <div className="alert alert-danger">{error}</div>}
+                    <button type="submit" className="btn btn-primary w-100">
+                      Send Reset Email
+                    </button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {error && user && (
+          <div className="container mt-5 pt-5">
             <div className="alert alert-danger">{error}</div>
           </div>
         )}
+
+        {/* Render ChatIcon inside Router */}
+        <ChatIcon theme={theme} />
+
         <Routes>
           <Route
             path="/"
             element={
-              <div className="container mt-5">
+              <div className="container mt-5 pt-5">
                 <header className="text-center py-5 parallax-bg">
                   <h1 className="display-4 fw-bold">Scam Awareness USA</h1>
                   <p className="lead">
@@ -278,12 +632,9 @@ function App() {
                       <video
                         controls
                         className="w-100 rounded shadow"
-                        src="https://via.placeholder.com/15s-video.mp4"
+                        src="vide.mp4"
                       >
-                        <source
-                          src="https://via.placeholder.com/15s-video.mp4"
-                          type="video/mp4"
-                        />
+                        <source src="vide.mp4" type="video/mp4" />
                         Your browser does not support the video tag.
                       </video>
                       <p className="mt-2 text-center">
@@ -351,13 +702,9 @@ function App() {
                           }`}
                         >
                           <div className="card text-center border-0 shadow-sm mx-auto testimonial-card">
-                            <div className="card-body">
-                              <h5 className="card-title text-teal">
-                                {testimonial.name}
-                              </h5>
-                              <p className="card-text text-muted">
-                                {testimonial.text}
-                              </p>
+                            <div className="card-body bg-teal text-white">
+                              <h5 className="card-title">{testimonial.name}</h5>
+                              <p className="card-text">{testimonial.text}</p>
                             </div>
                           </div>
                         </div>
@@ -394,42 +741,9 @@ function App() {
             }
           />
           <Route
-            path="/chat"
-            element={
-              <div className="container mt-5">
-                <ChatSection
-                  user={user}
-                  db={db}
-                  emailjsConfig={emailjsConfig}
-                />
-              </div>
-            }
-          />
-          <Route
-            path="/dashboard"
-            element={
-              isAgent ? (
-                <div className="container-fluid mt-5">
-                  <AgentDashboard
-                    user={user}
-                    db={db}
-                    storage={storage}
-                    emailjsConfig={emailjsConfig}
-                  />
-                </div>
-              ) : (
-                <div className="container mt-5">
-                  <div className="alert alert-danger">
-                    You do not have permission to access the Agent Dashboard.
-                  </div>
-                </div>
-              )
-            }
-          />
-          <Route
             path="/about"
             element={
-              <div className="container mt-5">
+              <div className="container mt-5 pt-5">
                 <h1 className="h2 mb-4">About Us</h1>
                 <div className="row g-4">
                   <div className="col-md-6">
@@ -463,6 +777,40 @@ function App() {
                   </div>
                 </div>
               </div>
+            }
+          />
+          <Route
+            path="/chat"
+            element={
+              <div className="container mt-5 pt-5">
+                <ChatSection
+                  user={user}
+                  db={db}
+                  storage={storage}
+                  emailjsConfig={emailjsConfig}
+                />
+              </div>
+            }
+          />
+          <Route
+            path="/dashboard"
+            element={
+              isAgent ? (
+                <div className="container-fluid mt-5 pt-5">
+                  <AgentDashboard
+                    user={user}
+                    db={db}
+                    storage={storage}
+                    emailjsConfig={emailjsConfig}
+                  />
+                </div>
+              ) : (
+                <div className="container mt-5 pt-5">
+                  <div className="alert alert-danger">
+                    You do not have permission to access the Agent Dashboard.
+                  </div>
+                </div>
+              )
             }
           />
         </Routes>
