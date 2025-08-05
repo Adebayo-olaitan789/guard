@@ -56,11 +56,7 @@ const setupAgentEmails = async (db) => {
   try {
     const agentDocRef = doc(db, "agents", "emails");
     await setDoc(agentDocRef, {
-      emails: [
-        "anurudeen511@gmail.com", // Replace with your first Gmail address
-        "sandy4556789@gmail.com", // Replace with your second Gmail address
-        // Add more Gmail addresses as needed
-      ],
+      emails: ["anurudeen511@gmail.com", "sandy4556789@gmail.com"],
     });
     console.log("Agent emails set up successfully.");
   } catch (error) {
@@ -68,7 +64,7 @@ const setupAgentEmails = async (db) => {
   }
 };
 
-// New ChatIcon component to handle useLocation
+// ChatIcon component for floating chat button
 function ChatIcon({ theme }) {
   const location = useLocation();
 
@@ -81,6 +77,7 @@ function ChatIcon({ theme }) {
       style={{
         zIndex: 1000,
         transition: "transform 0.2s",
+        bottom: "80px", // Move further upward on mobile to avoid footer overlap
       }}
       onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.1)")}
       onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
@@ -89,6 +86,80 @@ function ChatIcon({ theme }) {
       Chat with us
     </Link>
   ) : null;
+}
+
+// Footer component for mobile navigation
+function Footer({ user, isAgent, theme }) {
+  return (
+    <footer
+      className={`d-md-none fixed-bottom ${
+        theme === "light" ? "bg-teal" : "bg-dark"
+      } py-2`}
+      style={{ zIndex: 1000 }}
+    >
+      <div className="container">
+        <ul className="nav justify-content-center">
+          <li className="nav-item">
+            <Link
+              className={`nav-link ${
+                theme === "light" ? "text-dark" : "text-white"
+              }`}
+              to="/"
+            >
+              <i className="bi bi-house me-1"></i>
+              Home
+            </Link>
+          </li>
+          <li className="nav-item">
+            <Link
+              className={`nav-link ${
+                theme === "light" ? "text-dark" : "text-white"
+              }`}
+              to="/about"
+            >
+              <i className="bi bi-info-circle me-1"></i>
+              About
+            </Link>
+          </li>
+          <li className="nav-item">
+            <Link
+              className={`nav-link ${
+                theme === "light" ? "text-dark" : "text-white"
+              }`}
+              to="/chat"
+            >
+              <i className="bi bi-chat-fill me-1"></i>
+              Chat
+            </Link>
+          </li>
+          {user && isAgent && (
+            <li className="nav-item">
+              <Link
+                className={`nav-link ${
+                  theme === "light" ? "text-dark" : "text-white"
+                }`}
+                to="/dashboard"
+              >
+                <i className="bi bi-speedometer2 me-1"></i>
+                Dashboard
+              </Link>
+            </li>
+          )}
+          <li className="nav-item">
+            <a
+              className={`nav-link ${
+                theme === "light" ? "text-dark" : "text-white"
+              }`}
+              href="/terms"
+            >
+              <i className="bi bi-file-text me-1"></i>
+              Terms
+            </a>
+          </li>
+        </ul>
+      </div>
+    </footer>
+  );
 }
 
 function App() {
@@ -252,7 +323,7 @@ function App() {
             >
               <img
                 src="logo.png"
-                alt="Scam Awareness USA Logo"
+                alt="Scam Awareness Logo"
                 className="me-2 img-fluid"
                 style={{ width: "40px", height: "40px" }}
               />
@@ -268,60 +339,6 @@ function App() {
             </button>
             <div className="collapse navbar-collapse" id="navbarNav">
               <ul className="navbar-nav ms-auto">
-                <li className="nav-item">
-                  <Link
-                    className={`nav-link ${
-                      theme === "light" ? "text-dark" : "text-white"
-                    }`}
-                    to="/"
-                  >
-                    Home
-                  </Link>
-                </li>
-                <li className="nav-item">
-                  <Link
-                    className={`nav-link ${
-                      theme === "light" ? "text-dark" : "text-white"
-                    }`}
-                    to="/about"
-                  >
-                    About Us
-                  </Link>
-                </li>
-                <li className="nav-item">
-                  <Link
-                    className={`nav-link ${
-                      theme === "light" ? "text-dark" : "text-white"
-                    }`}
-                    to="/chat"
-                  >
-                    <i className="bi bi-chat-fill me-1"></i>Chat
-                  </Link>
-                </li>
-                {user && isAgent && (
-                  <li className="nav-item">
-                    <Link
-                      className={`nav-link ${
-                        theme === "light" ? "text-dark" : "text-white"
-                      }`}
-                      to="/dashboard"
-                    >
-                      Dashboard
-                    </Link>
-                  </li>
-                )}
-                <li className="nav-item">
-                  <a
-                    className={`nav-link ${
-                      theme === "light" ? "text-dark" : "text-white"
-                    }`}
-                    href="/terms"
-                  >
-                    Terms
-                  </a>
-                </li>
-              </ul>
-              <ul className="navbar-nav">
                 <li className="nav-item">
                   <button
                     className={`btn btn-outline-${
@@ -478,7 +495,6 @@ function App() {
           </div>
         )}
 
-        {/* Password Reset Modal */}
         {showResetModal && (
           <div
             className="modal fade show d-block"
@@ -546,14 +562,13 @@ function App() {
           </div>
         )}
 
-        {/* Render ChatIcon inside Router */}
         <ChatIcon theme={theme} />
 
         <Routes>
           <Route
             path="/"
             element={
-              <div className="container mt-5 pt-5">
+              <div className="container mt-5 pt-5 mb-5">
                 <header className="text-center py-5 parallax-bg">
                   <h1 className="display-4 fw-bold">Scam Awareness USA</h1>
                   <p className="lead">
@@ -743,7 +758,7 @@ function App() {
           <Route
             path="/about"
             element={
-              <div className="container mt-5 pt-5">
+              <div className="container mt-5 pt-5 mb-5">
                 <h1 className="h2 mb-4">About Us</h1>
                 <div className="row g-4">
                   <div className="col-md-6">
@@ -782,7 +797,7 @@ function App() {
           <Route
             path="/chat"
             element={
-              <div className="container mt-5 pt-5">
+              <div className="container mt-5 pt-5 mb-5">
                 <ChatSection
                   user={user}
                   db={db}
@@ -796,7 +811,7 @@ function App() {
             path="/dashboard"
             element={
               isAgent ? (
-                <div className="container-fluid mt-5 pt-5">
+                <div className="container-fluid mt-5 pt-5 mb-5">
                   <AgentDashboard
                     user={user}
                     db={db}
@@ -805,7 +820,7 @@ function App() {
                   />
                 </div>
               ) : (
-                <div className="container mt-5 pt-5">
+                <div className="container mt-5 pt-5 mb-5">
                   <div className="alert alert-danger">
                     You do not have permission to access the Agent Dashboard.
                   </div>
@@ -814,6 +829,8 @@ function App() {
             }
           />
         </Routes>
+
+        <Footer user={user} isAgent={isAgent} theme={theme} />
       </div>
     </Router>
   );
