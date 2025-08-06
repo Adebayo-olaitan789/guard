@@ -278,71 +278,61 @@ function App() {
         <nav className="navbar navbar-expand-lg fixed-top bg-dark">
           <div className="container">
             <Link
-              className="navbar-brand text-white d-flex align-items-center"
+              className="navbar-brand text-white d-flex align-items-center fs-6"
               to="/"
             >
               <img
                 src="logo.png"
                 alt="Scam Awareness Logo"
                 className="me-2 img-fluid"
-                style={{ width: "40px", height: "40px" }}
+                style={{ width: "30px", height: "30px" }}
               />
               Scam Awareness
             </Link>
-            <button
-              className="navbar-toggler"
-              type="button"
-              data-bs-toggle="collapse"
-              data-bs-target="#navbarNav"
-            >
-              <span className="navbar-toggler-icon"></span>
-            </button>
-            <div className="collapse navbar-collapse" id="navbarNav">
-              <ul className="navbar-nav ms-auto">
-                {user ? (
-                  <>
-                    <li className="nav-item">
-                      <span className="navbar-text mx-2 text-white">
-                        Welcome, {user.displayName}
-                      </span>
-                    </li>
-                    <li className="nav-item">
-                      <button
-                        className="btn btn-outline-danger"
-                        onClick={handleLogout}
-                      >
-                        Logout
-                      </button>
-                    </li>
-                  </>
-                ) : (
-                  <>
-                    <li className="nav-item">
-                      <button
-                        className="btn btn-outline-light mx-2"
-                        onClick={() => {
-                          setIsRegistering(false);
-                          setShowAuthModal(true);
-                        }}
-                      >
-                        Login
-                      </button>
-                    </li>
-                    <li className="nav-item">
-                      <button
-                        className="btn btn-primary mx-2"
-                        onClick={() => {
-                          setIsRegistering(true);
-                          setShowAuthModal(true);
-                        }}
-                      >
-                        Register
-                      </button>
-                    </li>
-                  </>
-                )}
-              </ul>
-            </div>
+            <ul className="navbar-nav ms-auto d-flex flex-row flex-nowrap align-items-center">
+              {user ? (
+                <>
+                  <li className="nav-item">
+                    <span className="navbar-text mx-1 text-white fs-6">
+                      Welcome, {user.displayName}
+                    </span>
+                  </li>
+                  <li className="nav-item">
+                    <button
+                      className="btn btn-outline-danger px-1 mx-1 fs-6"
+                      onClick={handleLogout}
+                    >
+                      Logout
+                    </button>
+                  </li>
+                </>
+              ) : (
+                <>
+                  <li className="nav-item">
+                    <button
+                      className="btn btn-outline-light px-1 mx-1 fs-6"
+                      onClick={() => {
+                        setIsRegistering(false);
+                        setShowAuthModal(true);
+                      }}
+                    >
+                      Login
+                    </button>
+                  </li>
+                  <li className="nav-item">
+                    <button
+                      className="btn btn-primary px-1 mx-1 fs-6"
+                      onClick={() => {
+                        setIsRegistering(true);
+                        setShowAuthModal(true);
+                      }}
+                    >
+                      Register
+                    </button>
+                  </li>
+                </>
+              )}
+            </ul>
           </div>
         </nav>
 
